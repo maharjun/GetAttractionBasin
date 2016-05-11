@@ -52,6 +52,11 @@ Temporary Items
 # un-ignore submodules
 !/MexMemoryInterfacing
 
+# un-ignore source / header and other folders
+!/Headers
+!/Source
+!/PropertySheets
+
 /*.open*
 # ignore all ~version of word documents
 *~*.*
