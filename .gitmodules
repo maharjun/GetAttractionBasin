@@ -1,3 +1,6 @@
 [submodule "MexMemoryInterfacing"]
 	path = MexMemoryInterfacing
 	url = https://www.github.com/maharjun/MexMemoryInterfacing
+[submodule "Grid2D"]
+	path = Grid2D
+	url = https://www.github.com/maharjun/Grid2D
