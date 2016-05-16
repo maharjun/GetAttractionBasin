@@ -42,21 +42,15 @@ Network Trash Folder
 Temporary Items
 .apdisk
 
-# Visual Studio Related Rules
-/*
-!/*.*
-/.vs
-/*.suo
-/*.*sdf
+# ignore CLion information directory
+/.idea
 
-# un-ignore submodules
-!/MexMemoryInterfacing
+# ignore build directory
+/build
 
-# un-ignore source / header and other folders
-!/Headers
-!/Source
-!/PropertySheets
+# ignore TempCode.txt
+# the above file is a temporary file used for certain code backups
+/TempCode.txt
 
-/*.open*
 # ignore all ~version of word documents
 *~*.*
