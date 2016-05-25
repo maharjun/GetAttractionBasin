@@ -1,0 +1,35 @@
+% GetAttBasin_IzhikevichSpiking
+% 
+%     [FullBasinBoundary, BasinPartitionBoundaries] = 
+%                                   GetAttBasin_IzhikevichSpiking(InputParams)
+% 
+% The input InputParams must be a struct with at-least the following features
+% This function expects the ParamArray to be a MATLAB structure with at-least
+% the following fields:
+% 
+%   a - single - scalar
+%   b - single - scalar
+%   c - single - scalar
+%   d - single - scalar
+%   
+%   GridXSpec - single - vector of length 3
+%   GridYSpec - single - vector of length 3
+%   
+%   GridXSpec = [GridXBegin, GridXStep, GridXEnd]
+%   GridYSpec = [GridYBegin, GridYStep, GridYEnd]
+%   
+%   onemsbyTstep - uint32_t - scalar
+%   
+%   InitialPointSet - should be a valid 'SinglePoint Vector' struct represent-
+%                     ing the region of points from which to start searching.
+% 
+% The returned Boundaries are returned as UInt Point Vectors representing the 
+% edge boundaries of the full attraction basin and its partitions.
+% 
+%   Point Vector -
+%     - ClassName = "PointVector"
+%     - X         = vector of X coordinates (must have length equal to 'Y')
+%     - Y         = vector of Y coordinates
+% 
+
+function [FullBasinBoundary, BasinPartitionBoundaries] = GetAttBasin_IzhikevichSpiking(InputParams)

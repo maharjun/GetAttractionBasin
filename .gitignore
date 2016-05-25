@@ -45,8 +45,8 @@ Temporary Items
 # ignore CLion information directory
 /.idea
 
-# ignore build directory
-/build
+# ignore all build directories
+/**/build
 
 # ignore TempCode.txt
 # the above file is a temporary file used for certain code backups

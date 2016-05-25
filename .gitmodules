@@ -4,3 +4,6 @@
 [submodule "Grid2D"]
 	path = Grid2D
 	url = https://www.github.com/maharjun/Grid2D
+[submodule "CMakeModules"]
+	path = CMakeModules
+	url = https://www.github.com/maharjun/CMakeModules
