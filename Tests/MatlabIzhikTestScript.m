@@ -24,7 +24,7 @@ GridYSpec = DynSysParameters.GridYSpec; % [0 1 1];
 fill(double(FullBasinBoundary.X)*GridXSpec(2) + GridXSpec(1), double(FullBasinBoundary.Y)*GridYSpec(2) + GridYSpec(1), 'b');
 hold on;
 for i = 1:length(BasinPartitionBoundaries)
-	fill(double(BasinPartitionBoundaries{i}.X)*GridXSpec(2) + GridXSpec(1), double(BasinPartitionBoundaries{i}.Y)*GridYSpec(2) + GridYSpec(1), i);
+	fill(double(BasinPartitionBoundaries{i}.X)*GridXSpec(2) + GridXSpec(1), double(BasinPartitionBoundaries{i}.Y)*GridYSpec(2) + GridYSpec(1), i, 'LineStyle', 'none');
 end
 xlim([GridXSpec(1),GridXSpec(3)])
 ylim([GridYSpec(1),GridYSpec(3)])
