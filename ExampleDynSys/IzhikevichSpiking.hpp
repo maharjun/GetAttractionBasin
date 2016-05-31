@@ -94,7 +94,7 @@ public:
 		getInputfromStruct<float>(ParamArray, "InitialPointSet", InitialPointVect, getInputOps(1,"is_required"));
 		for (auto &&point : InitialPointVect) {
 			if(this->isAttracted(point) || this->isAttracted(this->simulateTimeStep(point))) {
-				SinglePoint singleGridPoint = this->Transform.toGridPoint(point);
+				SinglePoint singleGridPoint = this->Transform.toGridCoords(point);
 				Point gridPoint(uint32_t(singleGridPoint.x+0.5f), uint32_t(singleGridPoint.y+0.5f));
 				PrivateInitialPointSet.insert(gridPoint);
 			}

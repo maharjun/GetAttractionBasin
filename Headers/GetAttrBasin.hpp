@@ -47,9 +47,9 @@ std::vector<Region> getAttractorBasin(DynamicalSystem<T> &DynSystem) {
 
 		// Simulate said boundary points
 		for (const auto &outerBoundPoint : CurrentOuterBoundary) {
-			auto actualOuterBoundPoint = DynSystem.Transform.toActualPoint(outerBoundPoint);
+			auto actualOuterBoundPoint = DynSystem.Transform.toActualCoords(outerBoundPoint);
 			auto actualSimulatedPoint = DynSystem.simulateTimeStep(actualOuterBoundPoint);
-			auto simulatedPoint = DynSystem.Transform.toGridPoint(actualSimulatedPoint);
+			auto simulatedPoint = DynSystem.Transform.toGridCoords(actualSimulatedPoint);
 			if(DynSystem.isAttracted(actualOuterBoundPoint)) {
 				// In case outerBoundPoint is already attracted
 				attBasinPartition[0].insert(outerBoundPoint);
