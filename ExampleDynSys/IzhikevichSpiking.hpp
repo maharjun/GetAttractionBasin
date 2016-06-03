@@ -58,8 +58,6 @@ public:
 		 *
 		 *   onemsbyTstep - uint32_t - scalar
 		 *
-		 *   InitialPointSet - should be a valid 'PointVector' struct representing
-		 *                     the region of points from which to search ahead.
 		 */
 		getInputfromStruct<float>(ParamArray, "a", this->a, getInputOps(2, "is_required", "required_size", 1));
 		getInputfromStruct<float>(ParamArray, "b", this->b, getInputOps(2, "is_required", "required_size", 1));
@@ -88,16 +86,14 @@ public:
 		this->XRange = {0, XGridMax};
 		this->YRange = {0, YGridMax};
 
-		this->timeStep = 1.0f / onemsbyTstep;
-
-		MexVector<SinglePoint> InitialPointVect;
-		getInputfromStruct<float>(ParamArray, "InitialPointSet", InitialPointVect, getInputOps(1,"is_required"));
-		for (auto &&point : InitialPointVect) {
-			if(this->isAttracted(point) || this->isAttracted(this->simulateTimeStep(point))) {
-				SinglePoint singleGridPoint = this->Transform.toGridCoords(point);
-				Point gridPoint(uint32_t(singleGridPoint.x+0.5f), uint32_t(singleGridPoint.y+0.5f));
-				PrivateInitialPointSet.insert(gridPoint);
-			}
+		this->timeStep = 1.0f / onemsbyTstep;	
+		
+		// Calculate the Grid Y Coordinate for 30.0V
+		auto GridY30V = this->Transform.toGridCoords(SinglePoint(0, 30.0f)).y;
+		GridY30V = (GridY30V >= YGridMax)? YGridMax : GridY30V;
+		for(uint32_t i=0; i < XGridMax; ++i) {
+			Point gridPoint(i, uint32_t(GridY30V+0.5f));
+			PrivateInitialPointSet.insert(gridPoint);
 		}
 	}
 	inline GenericPoint<float> simulateTimeStep(const GenericPoint<float> &PointNow) {

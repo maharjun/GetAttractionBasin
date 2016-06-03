@@ -1,0 +1,4 @@
+# ignore all matlab related unnecessary files
+*.mat
+*.m~
+*.asv
