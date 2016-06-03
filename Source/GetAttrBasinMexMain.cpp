@@ -29,8 +29,8 @@ void mexFunction(int           nlhs,           /* number of expected outputs */
 	auto attractorBasinRegions = getAttractorBasin(DynamicalSystem);
 
 	// get boundaries of the attractorBasinRegions
-	PointMexVect fullBasinBoundary = attractorBasinRegions.back().getMidwayBoundary();
-	MexVector<PointMexVect> partitionBoundaries(attractorBasinRegions.size()-1);
+	MexVector<Point, CAllocator> fullBasinBoundary = attractorBasinRegions.back().getMidwayBoundary();
+	MexVector<MexVector<Point, CAllocator>> partitionBoundaries(attractorBasinRegions.size()-1);
 	for(uint32_t i=0; i<partitionBoundaries.size(); ++i) {
 		partitionBoundaries[i] = attractorBasinRegions[i].getMidwayBoundary();
 	}

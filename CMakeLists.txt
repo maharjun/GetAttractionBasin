@@ -21,6 +21,12 @@ message(STATUS "C++ Compiler = ${CMAKE_CXX_COMPILER}")
 # configure the dynamical system include file
    if(NOT DYN_SYSTEM_HPP_PATH)
       set(DYN_SYSTEM_HPP_PATH ${CMAKE_CURRENT_SOURCE_DIR}/ExampleDynSys/IzhikevichSpiking.hpp)
+   else()
+      if (WIN32)
+         message(STATUS "DYN_SYSTEM_HPP_PATH = ${DYN_SYSTEM_HPP_PATH}")
+         string(REGEX REPLACE "\\\\" "/" ${DYN_SYSTEM_HPP_PATH} DYN_SYSTEM_HPP_PATH)
+      endif()
+      file(TO_CMAKE_PATH ${DYN_SYSTEM_HPP_PATH} DYN_SYSTEM_HPP_PATH)
    endif()
 
    if(NOT PREV_DYN_SYSTEM_FILE OR NOT PREV_DYN_SYSTEM_FILE STREQUAL DYN_SYSTEM_HPP_PATH)
@@ -60,11 +66,19 @@ message(STATUS "C++ Compiler = ${CMAKE_CXX_COMPILER}")
          ${GRID2D_MEX_HEADER_FILE_PATHS}
          ${MEXMEM_HEADER_FILE_PATHS}
          ${HEADER_FILE_PATHS})
-   set(SOURCE_FILES_1 Source/GetAttrBasinMexMain.cpp
-         ${CMAKE_BINARY_DIR}/DynamicalSystemInclude.hpp
-         ${EXAMPLE_DYN_SYS_HEADERS}
+
+   set(SOURCE_FILES_LIB
+         Source/GetAttrBasinMexMain.cpp 
          ${COMMON_SOURCE_FILES})
-   set(SOURCE_FILES ${SOURCE_FILES_1})
+   set(SOURCE_FILES_EXE
+         Source/GetAttrBasinMexMain.cpp 
+         Source/GetAttrBasinExeMain.cpp 
+         ${COMMON_SOURCE_FILES})
+
+   set(SOURCE_FILES 
+         ${SOURCE_FILES_LIB}
+         ${SOURCE_FILES_EXE}
+         ${EXAMPLE_DYN_SYS_HEADERS})
 
    # source group information to generate filters for VS
    source_group(
@@ -80,18 +94,6 @@ message(STATUS "C++ Compiler = ${CMAKE_CXX_COMPILER}")
       "Header Files\\GetAttractionBasin"
       FILES ${HEADER_FILE_PATHS})
 
-# include mex file along with documentation if exists
-   get_filename_component(MEX_DOC_SRC_PATH ${PREV_DYN_SYSTEM_FILE} DIRECTORY)
-   set(MEX_DOC_SRC_PATH ${MEX_DOC_SRC_PATH}/${DYN_SYSTEM_NAME}.txt)
-   message(STATUS "MEX_DOC_SRC_PATH = ${MEX_DOC_SRC_PATH}")
-   if (NOT EXISTS ${MEX_DOC_SRC_PATH})
-      set(MEX_DOC_SRC_PATH "")
-   endif()
-   message(STATUS "MEX_DOC_SRC_PATH = ${MEX_DOC_SRC_PATH}")
-   custom_add_mex(GetAttBasin_${DYN_SYSTEM_NAME} 
-      ${SOURCE_FILES_1}
-      DOCUMENTATION ${MEX_DOC_SRC_PATH})
-
 # assign default build type in case of single config generator 
    if(NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE)
       message(STATUS "CMAKE_BUILD_TYPE not defined")
@@ -99,17 +101,27 @@ message(STATUS "C++ Compiler = ${CMAKE_CXX_COMPILER}")
    endif()
    message(STATUS "CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}")
 
-# definition of build type specific parameters
-# for DEBUG CONFIG
-   set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DIS_DEBUG=true")
-# for RELEASE CONFIG
-   set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DIS_DEBUG=false")
+# Get Mex documentation if exists
+   get_filename_component(MEX_DOC_SRC_PATH ${PREV_DYN_SYSTEM_FILE} DIRECTORY)
+   set(MEX_DOC_SRC_PATH ${MEX_DOC_SRC_PATH}/${DYN_SYSTEM_NAME}.txt)
+   message(STATUS "MEX_DOC_SRC_PATH = ${MEX_DOC_SRC_PATH}")
+   if (NOT EXISTS ${MEX_DOC_SRC_PATH})
+      set(MEX_DOC_SRC_PATH "")
+   endif()
+   message(STATUS "MEX_DOC_SRC_PATH = ${MEX_DOC_SRC_PATH}")
+
+# Add Mex_LIB and MEX_EXE Targets
+   custom_add_mex(GetAttBasin_${DYN_SYSTEM_NAME}_mexlib 
+      ${SOURCE_FILES_LIB}
+      DOCUMENTATION ${MEX_DOC_SRC_PATH})
+   custom_add_mex_exec(GetAttBasin_${DYN_SYSTEM_NAME}_mexexe ${SOURCE_FILES_EXE})
 
 # install instructions
    
    install(DIRECTORY DESTINATION "${CMAKE_BINARY_DIR}/install" CONFIGURATIONS "Release")
    set(CMAKE_INSTALL_PREFIX "${CMAKE_BINARY_DIR}/install")
-   install_mex(GetAttBasin_${DYN_SYSTEM_NAME} .)
+   install_mex(GetAttBasin_${DYN_SYSTEM_NAME}_mexlib .)
+   install_mex_exec(GetAttBasin_${DYN_SYSTEM_NAME}_mexexe .)
    
 # unset some cached variables so that they are restord to their
 # default values the next time cmake is run

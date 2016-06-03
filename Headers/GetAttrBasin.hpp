@@ -1,4 +1,5 @@
 #include "DynamicalSystem.hpp"
+#include <MexMemoryInterfacing/Headers/GenericMexIO.hpp>
 #include <Grid2D/Headers/Region.hpp>
 #include <vector>
 
@@ -24,7 +25,7 @@ std::vector<Region> getAttractorBasin(DynamicalSystem<T> &DynSystem) {
 	// Initialize the various relevant regions
 	uint32_t XLim = DynSystem.getXLims().endPoint;
 	uint32_t YLim = DynSystem.getYLims().endPoint;
-	
+
 	Region fullAttractorBasin(XLim, YLim);
 	std::vector<Region> attBasinPartition(1, Region(XLim, YLim));
 	Region outOfBoundsRegion(XLim, YLim);
@@ -33,7 +34,8 @@ std::vector<Region> getAttractorBasin(DynamicalSystem<T> &DynSystem) {
 	PointSet CurrentOuterBoundary;
 	CurrentOuterBoundary = DynSystem.InitialPointSet;
 	uint32_t nNewPointsAdded;
-
+	uint32_t NRounds = 0, NPoints = 0;
+	
 	do {
 		// This loop runs until, in a particular iteration, no new points were added
 		nNewPointsAdded = 0;
@@ -47,66 +49,78 @@ std::vector<Region> getAttractorBasin(DynamicalSystem<T> &DynSystem) {
 
 		// Simulate said boundary points
 		for (const auto &outerBoundPoint : CurrentOuterBoundary) {
-			auto actualOuterBoundPoint = DynSystem.Transform.toActualCoords(outerBoundPoint);
-			auto actualSimulatedPoint = DynSystem.simulateTimeStep(actualOuterBoundPoint);
-			auto simulatedPoint = DynSystem.Transform.toGridCoords(actualSimulatedPoint);
-			if(DynSystem.isAttracted(actualOuterBoundPoint)) {
-				// In case outerBoundPoint is already attracted
-				attBasinPartition[0].insert(outerBoundPoint);
-				fullAttractorBasin.insert(outerBoundPoint);
-				nNewPointsAdded++;
-			}
-			else if(DynSystem.isAttracted(actualSimulatedPoint)) {
-				// This is the case where simulatedPoint was already attracted. Here we simply
-				// add it to attBasinPartition[1]
-				if(attBasinPartition.size()==1)
-					attBasinPartition.push_back(Region(XLim, YLim));
-				attBasinPartition[1].insert(outerBoundPoint);
-				fullAttractorBasin.insert(outerBoundPoint);
-				nNewPointsAdded++;
-			}
-			else if (simulatedPoint.x > XLim-1 || simulatedPoint.x < 0
-			         || simulatedPoint.y > YLim-1 || simulatedPoint.y < 0
-			         || outOfBoundsRegion.contains(simulatedPoint)){
-				// In case simulatedPoint is out of bounds or lies in
-				// outOfBoundsRegion
-				outOfBoundsRegion.insert(outerBoundPoint);
-			}
-			else {
-				// In this case, outerBoundPoint is not obviously going out of
-				// bounds and it is not attracted. so we check the region that
-				// contains simulatedPoint and insert accordingly
-				if (attBasinPartition.size() > 0 && attBasinPartition.back().contains(simulatedPoint)) {
-					// This is the case where a new partition has to be added for the point.
-					attBasinPartition.push_back(Region(XLim, YLim));
-					attBasinPartition.back().insert(outerBoundPoint);
-					fullAttractorBasin.insert(outerBoundPoint);
-					nNewPointsAdded++;
+			SinglePoint currentPoint = outerBoundPoint;
+			bool isCurrentPointinOutBound = true;
+			bool isInAttBasin = false;
+			bool isOutOfBounds = false;
+			uint32_t attBasinInsertIndex = 0;
+
+			// this represents the number of times a point is simulated before it gets
+			// out of a boundary
+			uint32_t SimulationLength = 0;
+			while (isCurrentPointinOutBound) {
+				SimulationLength++;
+				// Set the flag below false. Only if it s set to true by the end of the loop
+				// will the loop continue.
+				isCurrentPointinOutBound = false;
+				auto actualCurrentPoint = DynSystem.Transform.toActualCoords(currentPoint);
+				auto actualSimulatedPoint = DynSystem.simulateTimeStep(actualCurrentPoint);
+				auto simulatedPoint = DynSystem.Transform.toGridCoords(actualSimulatedPoint);
+				Point simulatedGridPoint(simulatedPoint.x + 0.5f, simulatedPoint.y + 0.5f);
+
+				if(DynSystem.isAttracted(actualCurrentPoint)) {
+					// In case outerBoundPoint is already attracted
+					isInAttBasin = true;
+					attBasinInsertIndex = SimulationLength-1;
 				}
-				else if(attBasinPartition.size() > 1 && (attBasinPartition.end()-2)->contains(simulatedPoint)) {
-					// This is a common case rolled out of the loop.
-					// In this, we check if the simulated point lies in the last but one
-					// partition and insert into the last partition if it is the case
-					attBasinPartition.back().insert(outerBoundPoint);
-					fullAttractorBasin.insert(outerBoundPoint);
-					nNewPointsAdded++;
+				else if(DynSystem.isAttracted(actualSimulatedPoint)) {
+					// This is the case where simulatedPoint was already attracted. Here
+					// we simply add it to attBasinPartition[1]
+					isInAttBasin = true;
+					attBasinInsertIndex = SimulationLength;
 				}
-				else if (attBasinPartition.size() > 2) {
-					// Here we successively check for all regions upto (excluding)
-					// attBasinPartition[0].
-					for(uint32_t i = attBasinPartition.size()-2; i --> 0 ;) {
+				else if (simulatedPoint.x > XLim-1 || simulatedPoint.x < 0
+				         || simulatedPoint.y > YLim-1 || simulatedPoint.y < 0
+				         || outOfBoundsRegion.contains(simulatedPoint)){
+					// In case simulatedPoint is out of bounds or lies in
+					// outOfBoundsRegion
+					isOutOfBounds = true;
+				}
+				else if (!CurrentOuterBoundary.count(simulatedGridPoint)) {
+					// Here, we check the containership of SimulatedPoint in the existing
+					// attBasinPartition's
+					for(uint32_t i = attBasinPartition.size(); i --> 0 ;) {
 						if(attBasinPartition[i].contains(simulatedPoint)) {
-							attBasinPartition[i+1].insert(outerBoundPoint);
-							fullAttractorBasin.insert(outerBoundPoint);
-							nNewPointsAdded++;
+							isInAttBasin = true;
+							attBasinInsertIndex = i+SimulationLength;
 							break;
 						}
 					}
+					// In any case apart from the ones described above, the point
+					// the point does not seem to tend towards the attractor OR go
+					// out of bounds and so we will leave it as it is.
 				}
-
-				// In any case apart from the ones described above, the point
-				// the point does not seem to tend towards the attractor OR go
-				// out of bounds and so we will leave it as it is.
+				else {
+					// In this case, the Point has not been simulated enough. Hence
+					// we will set it up for further simulation
+					if (currentPoint != simulatedPoint) {
+						// This condition is to prevent getting stuck in other equilibria
+						// That somehow manage to come exactly on the grid.
+						currentPoint = simulatedPoint;
+						isCurrentPointinOutBound = true;
+					}
+				}
+			}
+			if (isInAttBasin) {
+				if (attBasinInsertIndex >= attBasinPartition.size()) {
+					attBasinPartition.resize(attBasinInsertIndex+1, Region(XLim, YLim));
+				}
+				attBasinPartition[attBasinInsertIndex].insert(outerBoundPoint);
+				fullAttractorBasin.insert(outerBoundPoint);
+				nNewPointsAdded++;
+			}
+			else if (isOutOfBounds) {
+				outOfBoundsRegion.insert(outerBoundPoint);
 			}
 		}
 
@@ -117,6 +131,14 @@ std::vector<Region> getAttractorBasin(DynamicalSystem<T> &DynSystem) {
 		
 		// Updating CurrentOuterBoundary
 		CurrentOuterBoundary = fullAttractorBasin.getOuterBoundary();
+
+		NRounds++;
+		NPoints += nNewPointsAdded;
+		if (NRounds % 100 == 0) {
+			WriteOutput("NRounds = %d\n", NRounds);
+			WriteOutput("NPoints = %d\n", NPoints);
+		}
+
 	} while(nNewPointsAdded);
 
 	attBasinPartition.push_back(fullAttractorBasin);
