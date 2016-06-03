@@ -48,6 +48,9 @@ Temporary Items
 # ignore all build directories
 /**/build
 
+# ignore pycache
+/__pycache__
+
 # ignore TempCode.txt
 # the above file is a temporary file used for certain code backups
 /TempCode.txt
