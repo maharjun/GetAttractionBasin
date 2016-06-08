@@ -16,7 +16,7 @@ def SetupDynSystem(DynSystemHPPPath=None):
     # Initialize Directories relevant to CMake
     CMakeModulesDir = os.path.join(CurrentScriptDir, 'CMakeModules')
     CurrentSourceDir = CurrentScriptDir
-    BuildDir = os.path.join(os.getcwd(), 'build')
+    BuildDir = os.path.join(os.getcwd(), 'GetAttBasin_build')
 
     # Add CMakeModulesDir to sys path to get relevant functions
     sys.path.insert(0, CMakeModulesDir)
